@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>任务管理</title>
+    <meta name="description" content="高效协作，轻松管理任务">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="任务管理">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3B82F6;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--danger);
+            color: white;
+            padding: 12px 16px;
+            z-index: 9999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .notification-banner.pulse {
+            animation: slideDown 0.3s ease, pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                background: var(--danger);
+            }
+            50% {
+                background: #dc2626;
+            }
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 40px 24px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: var(--bg);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: var(--bg);
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .header {
+            padding: 20px;
+            color: white;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .user-details {
+            text-align: right;
+        }
+
+        .user-details .name {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .user-details .role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .home-stats {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .home-stats h3 {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-box.overdue {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-box.overdue .stat-number {
+            color: #fee2e2;
+        }
+
+        .stat-number.pending {
+            color: var(--warning);
+        }
+
+        .stat-number.completed {
+            color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            background: rgba(255, 255, 255, 0.15);
+            margin: 0 12px;
+            border-radius: 16px;
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .content {
+            background: var(--bg);
+            margin-top: 20px;
+            border-radius: 24px 24px 0 0;
+            min-height: calc(100vh - 280px);
+            padding: 20px 16px 100px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            animation: slideIn 0.3s ease;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .task-card.overdue {
+            border-color: var(--danger);
+            background: #fef2f2;
+            animation: slideIn 0.3s ease, overduePulse 2s infinite;
+        }
+
+        @keyframes overduePulse {
+            0%, 100% {
+                border-color: var(--danger);
+            }
+            50% {
+                border-color: #dc2626;
+            }
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+            margin-right: 12px;
+            line-height: 1.4;
+        }
+
+        .task-card.overdue .task-title {
+            color: var(--danger);
+        }
+
+        .task-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .task-badge.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .task-badge.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .task-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .task-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .task-meta {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .task-deadline {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        .task-deadline.overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .task-deadline.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .task-deadline.normal {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .task-assignee {
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .group-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .group-badge.hanyuan {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .group-badge.shimian {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8B5CF6;
+        }
+
+        .user-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .user-card-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-card-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .user-card-info .name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-card-info .username {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .user-card-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .user-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .user-card-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .role-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .role-badge.superadmin {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8B5CF6;
+        }
+
+        .role-badge.admin {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .role-badge.user {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6B7280;
+        }
+
+        .group-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .group-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .group-card-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .group-card-count {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .stats-section {
+            margin-bottom: 24px;
+        }
+
+        .stats-section h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stats-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .progress-bar-container {
+            margin-bottom: 12px;
+        }
+
+        .progress-label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .progress-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: var(--bg);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.pending {
+            background: var(--warning);
+        }
+
+        .progress-fill.completed {
+            background: var(--success);
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-right: 12px;
+        }
+
+        .rank-number.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: white;
+        }
+
+        .rank-number.silver {
+            background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%);
+            color: white;
+        }
+
+        .rank-number.bronze {
+            background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+            color: white;
+        }
+
+        .rank-number.default {
+            background: var(--bg);
+            color: var(--text-secondary);
+        }
+
+        .rank-info {
+            flex: 1;
+        }
+
+        .rank-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .rank-group {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .rank-stats {
+            text-align: right;
+        }
+
+        .rank-stats .completed {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: calc(50% - 240px + 24px);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 500px) {
+            .fab {
+                right: 24px;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 480px;
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--border);
+        }
+
+        .task-detail {
+            margin-bottom: 24px;
+        }
+
+        .task-detail-item {
+            margin-bottom: 16px;
+        }
+
+        .task-detail-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .task-detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            padding: 8px;
+            min-width: 150px;
+            z-index: 150;
+            display: none;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg);
+        }
+
+        .dropdown-item.danger {
+            color: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .task-tabs {
+            background: var(--card-bg);
+            margin: -4px -4px 16px;
+            border-radius: 12px;
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .task-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .task-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <div class="notification-banner hidden" id="notificationBanner">
+            <span id="notificationText">🔔 您有新任务！</span>
+            <button class="btn-small btn-secondary" onclick="stopNotification()">查看</button>
+        </div>
+
+        <div id="loginPage" class="login-container">
+            <div class="login-card">
+                <div class="login-logo">
+                    <h1>📋 任务管理</h1>
+                    <p>高效协作，轻松管理</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">账号（数字）</label>
+                        <input type="text" class="form-input" id="loginUsername" placeholder="请输入账号" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                    </div>
+                    <div id="loginError" class="error-message hidden"></div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 12px;">登录</button>
+                </form>
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">测试账号：</p>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        <p><strong>超级管理员：</strong>100000000000001 / admin123</p>
+                        <p><strong>管理员：</strong>100000000000002 / manager123</p>
+                        <p><strong>汉源员工：</strong>100000000000003 / user123</p>
+                        <p><strong>石棉员工：</strong>100000000000004 / user123</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainApp" class="hidden">
+            <div class="header">
+                <div class="header-top">
+                    <div class="header-title">
+                        <h1>任务管理</h1>
+                        <p id="welcomeText">欢迎回来</p>
+                    </div>
+                    <div class="user-info" id="userInfo">
+                        <div class="user-details">
+                            <div class="name" id="currentUserName">用户</div>
+                            <div class="role" id="currentUserRole">角色</div>
+                        </div>
+                        <div class="user-avatar" id="currentUserAvatar">U</div>
+                        <div class="dropdown-menu" id="userDropdown">
+                            <div class="dropdown-item" id="logoutBtn">
+                                <span>🚪</span> 退出登录
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="home-stats" id="homeStats">
+                    <h3>📊 今日统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-number pending" id="statPending">0</div>
+                            <div class="stat-label">待完成</div>
+                        </div>
+                        <div class="stat-box overdue">
+                            <div class="stat-number" id="statOverdue">0</div>
+                            <div class="stat-label">已超时</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number completed" id="statCompleted">0</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-tabs" id="navTabs">
+                    <button class="nav-tab active" data-page="tasks">任务管理</button>
+                    <button class="nav-tab" data-page="stats">统计排名</button>
+                    <button class="nav-tab hidden" data-page="users" id="usersTab">用户管理</button>
+                    <button class="nav-tab hidden" data-page="groups" id="groupsTab">群组管理</button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div id="tasksPage" class="page active">
+                    <div class="task-tabs">
+                        <button class="task-tab active" data-status="pending">待完成</button>
+                        <button class="task-tab" data-status="completed">已完成</button>
+                    </div>
+                    <div class="task-list" id="taskList"></div>
+                </div>
+
+                <div id="statsPage" class="page">
+                    <div class="stats-section" id="personalStats">
+                        <h3>📊 我的任务统计</h3>
+                        <div class="stats-card" id="personalStatsCard"></div>
+                    </div>
+
+                    <div class="stats-section hidden" id="teamStats">
+                        <h3>👥 全员完成情况</h3>
+                        <div class="stats-card" id="teamStatsCard"></div>
+                    </div>
+
+                    <div class="stats-section hidden" id="rankSection">
+                        <h3>🏆 任务完成排名</h3>
+                        <div class="stats-card" id="rankCard"></div>
+                    </div>
+                </div>
+
+                <div id="usersPage" class="page">
+                    <div id="userList"></div>
+                </div>
+
+                <div id="groupsPage" class="page">
+                    <div id="groupList"></div>
+                </div>
+            </div>
+
+            <button class="fab" id="addBtn">+</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addTaskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">发布任务</h2>
+                <button class="modal-close" id="closeAddTaskModal">✕</button>
+            </div>
+            <form id="addTaskForm">
+                <div class="form-group">
+                    <label class="form-label">任务标题</label>
+                    <input type="text" class="form-input" id="taskTitle" placeholder="输入任务标题" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">任务描述</label>
+                    <textarea class="form-input" id="taskDescription" placeholder="输入任务描述" style="min-height: 100px; resize: vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">完成截止时间</label>
+                    <input type="datetime-local" class="form-input" id="taskDeadline">
+                </div>
+                <div class="form-group hidden" id="assignGroup">
+                    <label class="form-label">发布对象</label>
+                    <select class="form-select" id="taskAssignType">
+                        <option value="all">所有人员</option>
+                        <option value="group">指定群组</option>
+                        <option value="person">指定人员</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="assignGroupSelect">
+                    <label class="form-label">选择群组</label>
+                    <select class="form-select" id="taskAssignGroup"></select>
+                </div>
+                <div class="form-group hidden" id="assignPersonGroup">
+                    <label class="form-label">选择人员</label>
+                    <select class="form-select" id="taskAssignedTo"></select>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancelAddTask">取消</button>
+                    <button type="submit" class="btn btn-primary">发布</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="taskDetailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">任务详情</h2>
+                <button class="modal-close" id="closeTaskDetailModal">✕</button>
+            </div>
+            <div class="task-detail" id="taskDetail"></div>
+            <div class="btn-group" id="taskDetailActions"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="userModalTitle">添加用户</h2>
+                <button class="modal-close" id="closeUserModal">✕</button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input type="text" class="form-input" id="userName" placeholder="输入用户姓名" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">账号（15位以内数字）</label>
+                    <input type="text" class="form-input" id="userUsername" placeholder="输入账号" required>
+                </div>
+                <div class="form-group" id="passwordGroup">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="userPassword" placeholder="输入密码">
+                </div>
+                <div class="form-group" id="roleGroup">
+                    <label class="form-label">角色</label>
+                    <select class="form-select" id="userRole">
+                        <option value="user">一般人员</option>
+                        <option value="admin">管理员</option>
+                        <option value="superadmin">超级管理员</option>
+                    </select>
+                </div>
+                <div class="form-group" id="userGroupGroup">
+                    <label class="form-label">所属群组</label>
+                    <select class="form-select" id="userGroup">
+                        <option value="">不设置</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancelUser">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="groupModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="groupModalTitle">添加群组</h2>
+                <button class="modal-close" id="closeGroupModal">✕</button>
+            </div>
+            <form id="groupForm">
+                <input type="hidden" id="editGroupId">
+                <div class="form-group">
+                    <label class="form-label">群组名称</label>
+                    <input type="text" class="form-input" id="groupName" placeholder="输入群组名称" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">群组标识（英文）</label>
+                    <input type="text" class="form-input" id="groupKey" placeholder="输入群组标识，如：hanyuan" required>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancelGroup">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">确认操作</h2>
+                <button class="modal-close" id="closeConfirmModal">✕</button>
+            </div>
+            <p id="confirmMessage" style="margin-bottom: 24px; color: var(--text-secondary);"></p>
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" id="cancelConfirm">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEYS = {
+            USERS: 'taskmanager_users',
+            TASKS: 'taskmanager_tasks',
+            GROUPS: 'taskmanager_groups',
+            SESSION: 'taskmanager_session',
+            NOTIFIED_TASKS: 'taskmanager_notified_tasks'
+        };
+
+        const defaultGroups = [
+            { id: '1', name: '汉源', key: 'hanyuan', createdAt: new Date().toISOString() },
+            { id: '2', name: '石棉', key: 'shimian', createdAt: new Date().toISOString() }
+        ];
+
+        const UserRole = {
+            SUPERADMIN: 'superadmin',
+            ADMIN: 'admin',
+            USER: 'user'
+        };
+
+        const TaskStatus = {
+            PENDING: 'pending',
+            COMPLETED: 'completed'
+        };
+
+        const initialUsers = [
+            { id: '1', username: '100000000000001', password: 'admin123', role: 'superadmin', name: '超级管理员', createdAt: new Date().toISOString() },
+            { id: '2', username: '100000000000002', password: 'manager123', role: 'admin', name: '张经理', createdAt: new Date().toISOString() },
+            { id: '3', username: '100000000000003', password: 'user123', role: 'user', name: '李员工', group: 'hanyuan', createdAt: new Date().toISOString() },
+            { id: '4', username: '100000000000004', password: 'user123', role: 'user', name: '王员工', group: 'shimian', createdAt: new Date().toISOString() }
+        ];
+
+        const initialTasks = [
+            { id: '1', title: '完成项目报告', description: '撰写本周项目进度报告', status: 'pending', assignedTo: '3', createdBy: '1', createdAt: new Date('2026-05-10').toISOString(), deadline: new Date('2026-05-20T18:00:00').toISOString() },
+            { id: '2', title: '团队会议', description: '参加周一上午的团队周会', status: 'pending', assignedGroup: 'hanyuan', createdBy: '2', createdAt: new Date('2026-05-12').toISOString(), deadline: new Date('2026-05-16T10:00:00').toISOString() },
+            { id: '3', title: '代码审查', description: '审查新功能的PR代码', status: 'completed', assignedTo: '2', createdBy: '1', createdAt: new Date('2026-05-08').toISOString(), completedAt: new Date('2026-05-09').toISOString() }
+        ];
+
+        let users = [];
+        let tasks = [];
+        let groups = [];
+        let currentUser = null;
+        let currentPage = 'tasks';
+        let currentTaskStatus = 'pending';
+        let confirmCallback = null;
+        let notificationAudio = null;
+        let notificationInterval = null;
+        let notifyingTaskId = null;
+        let checkInterval = null;
+
+        function loadData() {
+            const storedUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+            const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
+            const storedGroups = localStorage.getItem(STORAGE_KEYS.GROUPS);
+            const storedSession = localStorage.getItem(STORAGE_KEYS.SESSION);
+
+            users = storedUsers ? JSON.parse(storedUsers) : initialUsers;
+            tasks = storedTasks ? JSON.parse(storedTasks) : initialTasks;
+            groups = storedGroups ? JSON.parse(storedGroups) : defaultGroups;
+
+            if (!storedUsers) saveUsers();
+            if (!storedTasks) saveTasks();
+            if (!storedGroups) saveGroups();
+
+            if (storedSession) {
+                const session = JSON.parse(storedSession);
+                const user = users.find(u => u.id === session.userId);
+                if (user) currentUser = user;
+            }
+        }
+
+        function saveUsers() { localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users)); }
+        function saveTasks() { localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks)); }
+        function saveGroups() { localStorage.setItem(STORAGE_KEYS.GROUPS, JSON.stringify(groups)); }
+        function saveSession(userId) { localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify({ userId, loginAt: new Date().toISOString() })); }
+        function clearSession() { localStorage.removeItem(STORAGE_KEYS.SESSION); }
+        function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 9); }
+        function formatDate(dateString) { return new Date(dateString).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }); }
+        function formatDateTime(dateString) { return new Date(dateString).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+        function getRoleText(role) { return { superadmin: '超级管理员', admin: '管理员', user: '一般人员' }[role] || role; }
+        function getGroupText(groupKey) { const g = groups.find(g => g.key === groupKey); return g ? g.name : groupKey; }
+        function getStatusText(status) { return { pending: '待完成', completed: '已完成' }[status] || status; }
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text || ''; return d.innerHTML; }
+        function getUserById(id) { return users.find(u => u.id === id); }
+        function getGroupByKey(key) { return groups.find(g => g.key === key); }
+
+        function isTaskOverdue(task) {
+            if (!task.deadline || task.status === TaskStatus.COMPLETED) return false;
+            return new Date(task.deadline) < new Date();
+        }
+
+        function isTaskWarning(task) {
+            if (!task.deadline || task.status === TaskStatus.COMPLETED || isTaskOverdue(task)) return false;
+            const hoursDiff = (new Date(task.deadline) - new Date()) / (1000 * 60 * 60);
+            return hoursDiff <= 24 && hoursDiff > 0;
+        }
+
+        function getDeadlineStatusClass(task) {
+            if (isTaskOverdue(task)) return 'overdue';
+            if (isTaskWarning(task)) return 'warning';
+            return 'normal';
+        }
+
+        function initNotificationAudio() {
+            try { notificationAudio = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch (e) { console.log('音频初始化失败', e); }
+        }
+
+        function playNotificationSound() {
+            if (!notificationAudio) initNotificationAudio();
+            try {
+                const ctx = notificationAudio || new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) { console.log('播放声音失败', e); }
+        }
+
+        function showNotification(taskId, message) {
+            const banner = document.getElementById('notificationBanner');
+            const text = document.getElementById('notificationText');
+            notifyingTaskId = taskId;
+            text.textContent = message;
+            banner.classList.remove('hidden');
+            banner.classList.add('pulse');
+            playNotificationSound();
+            notificationInterval = setInterval(playNotificationSound, 2000);
+        }
+
+        function stopNotification() {
+            if (notificationInterval) { clearInterval(notificationInterval); notificationInterval = null; }
+            document.getElementById('notificationBanner').classList.add('hidden');
+            document.getElementById('notificationBanner').classList.remove('pulse');
+            if (notifyingTaskId) { openTaskDetailModal(notifyingTaskId); notifyingTaskId = null; }
+        }
+
+        function checkNewTasks() {
+            if (!currentUser || currentUser.role !== UserRole.USER) return;
+            const notified = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTIFIED_TASKS) || '[]');
+            const userTasks = tasks.filter(t => t.assignedTo === currentUser.id && t.status === TaskStatus.PENDING && !notified.includes(t.id));
+            if (userTasks.length > 0) {
+                const newTask = userTasks[0];
+                notified.push(newTask.id);
+                localStorage.setItem(STORAGE_KEYS.NOTIFIED_TASKS, JSON.stringify(notified));
+                showNotification(newTask.id, `🔔 新任务：${newTask.title}`);
+            }
+        }
+
+        function isSuperAdmin() { return currentUser && currentUser.role === UserRole.SUPERADMIN; }
+        function isAdminOrAbove() { return currentUser && (currentUser.role === UserRole.SUPERADMIN || currentUser.role === UserRole.ADMIN); }
+        function canViewAllTasks() { return isAdminOrAbove(); }
+        function canPublishTask() { return isAdminOrAbove(); }
+        function canManageUsers() { return isSuperAdmin(); }
+        function canManageGroups() { return isSuperAdmin(); }
+        function canEditTask(task) {
+            if (!currentUser) return false;
+            if (isAdminOrAbove()) return true;
+            return task.assignedTo === currentUser.id || (task.assignedGroup && currentUser.group === task.assignedGroup);
+        }
+        function canDeleteUser(userId) {
+            if (!isSuperAdmin()) return false;
+            if (userId === currentUser.id) return false;
+            return true;
+        }
+        function isValidUsername(username) { return /^\d{1,15}$/.test(username); }
+
+        function login(username, password) {
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) { currentUser = user; saveSession(user.id); return true; }
+            return false;
+        }
+
+        function logout() {
+            stopNotification();
+            currentUser = null;
+            clearSession();
+            if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
+            showLoginPage();
+        }
+
+        function addUser(name, username, password, role, group) {
+            const user = { id: generateId(), username, password, role, name, group: group || undefined, createdAt: new Date().toISOString() };
+            users.push(user); saveUsers(); return user;
+        }
+
+        function updateUser(id, name, username, password, role, group) {
+            const user = users.find(u => u.id === id);
+            if (user) {
+                user.name = name; user.username = username; if (password) user.password = password; user.role = role; user.group = group || undefined;
+                saveUsers();
+            }
+        }
+
+        function deleteUser(id) {
+            users = users.filter(u => u.id !== id);
+            tasks = tasks.filter(t => t.assignedTo !== id);
+            saveUsers(); saveTasks();
+        }
+
+        function addGroup(name, key) {
+            const group = { id: generateId(), name, key, createdAt: new Date().toISOString() };
+            groups.push(group); saveGroups(); return group;
+        }
+
+        function updateGroup(id, name, key) {
+            const group = groups.find(g => g.id === id);
+            if (group) { group.name = name; group.key = key; saveGroups(); }
+        }
+
+        function deleteGroup(id) {
+            const group = groups.find(g => g.id === id);
+            if (group) {
+                users.forEach(u => { if (u.group === group.key) u.group = undefined; });
+                tasks.forEach(t => { if (t.assignedGroup === group.key) t.assignedGroup = undefined; });
+                groups = groups.filter(g => g.id !== id);
+                saveGroups(); saveUsers(); saveTasks();
+            }
+        }
+
+        function publishTask(title, description, deadline, assignType, assignValue) {
+            const newTasks = [];
+            if (assignType === 'all') {
+                users.filter(u => u.role === UserRole.USER).forEach(user => {
+                    newTasks.push({
+                        id: generateId(), title, description, deadline: deadline || undefined, status: TaskStatus.PENDING,
+                        assignedTo: user.id, createdBy: currentUser.id, createdAt: new Date().toISOString()
+                    });
+                });
+            } else if (assignType === 'group' && assignValue) {
+                users.filter(u => u.role === UserRole.USER && u.group === assignValue).forEach(user => {
+                    newTasks.push({
+                        id: generateId(), title, description, deadline: deadline || undefined, status: TaskStatus.PENDING,
+                        assignedTo: user.id, assignedGroup: assignValue, createdBy: currentUser.id, createdAt: new Date().toISOString()
+                    });
+                });
+            } else if (assignType === 'person' && assignValue) {
+                newTasks.push({
+                    id: generateId(), title, description, deadline: deadline || undefined, status: TaskStatus.PENDING,
+                    assignedTo: assignValue, createdBy: currentUser.id, createdAt: new Date().toISOString()
+                });
+            }
+            tasks = [...tasks, ...newTasks];
+            saveTasks();
+            localStorage.removeItem(STORAGE_KEYS.NOTIFIED_TASKS);
+            return newTasks;
+        }
+
+        function updateTaskStatus(id, status) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.status = status;
+                if (status === TaskStatus.COMPLETED) task.completedAt = new Date().toISOString();
+                else delete task.completedAt;
+                saveTasks();
+            }
+        }
+
+        function getFilteredTasks(status) {
+            let filtered = tasks.filter(t => t.status === status);
+            if (!canViewAllTasks()) filtered = filtered.filter(t => t.assignedTo === currentUser.id);
+            if (status === TaskStatus.PENDING) {
+                filtered.sort((a, b) => {
+                    const aO = isTaskOverdue(a), bO = isTaskOverdue(b);
+                    if (aO && !bO) return -1;
+                    if (!aO && bO) return 1;
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
+            } else {
+                filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+            return filtered;
+        }
+
+        function getUserStats(userId) {
+            const userTasks = tasks.filter(t => t.assignedTo === userId);
+            return {
+                pending: userTasks.filter(t => t.status === TaskStatus.PENDING).length,
+                completed: userTasks.filter(t => t.status === TaskStatus.COMPLETED).length,
+                overdue: userTasks.filter(t => isTaskOverdue(t)).length,
+                total: userTasks.length
+            };
+        }
+
+        function getTeamStats() {
+            const normalUsers = users.filter(u => u.role === UserRole.USER);
+            const teamTasks = tasks.filter(t => normalUsers.some(u => u.id === t.assignedTo));
+            return {
+                pending: teamTasks.filter(t => t.status === TaskStatus.PENDING).length,
+                completed: teamTasks.filter(t => t.status === TaskStatus.COMPLETED).length,
+                overdue: teamTasks.filter(t => isTaskOverdue(t)).length,
+                total: teamTasks.length
+            };
+        }
+
+        function getRankList() {
+            const normalUsers = users.filter(u => u.role === UserRole.USER);
+            return normalUsers.map(user => ({
+                ...user,
+                completed: getUserStats(user.id).completed,
+                pending: getUserStats(user.id).pending,
+                total: getUserStats(user.id).total
+            })).sort((a, b) => b.completed - a.completed);
+        }
+
+        function showLoginPage() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            updateUserInfo();
+            updateNavTabs();
+            renderHomeStats();
+            renderTasks();
+            renderStats();
+            renderGroups();
+            renderUsers();
+            
+            if (!checkInterval) {
+                checkInterval = setInterval(() => {
+                    renderHomeStats();
+                    renderTasks();
+                    checkNewTasks();
+                }, 5000);
+            }
+        }
+
+        function updateUserInfo() {
+            if (!currentUser) return;
+            document.getElementById('currentUserName').textContent = currentUser.name;
+            document.getElementById('currentUserRole').textContent = getRoleText(currentUser.role);
+            document.getElementById('currentUserAvatar').textContent = currentUser.name.charAt(0);
+            document.getElementById('welcomeText').textContent = `${getRoleText(currentUser.role)}，你好！`;
+        }
+
+        function updateNavTabs() {
+            const usersTab = document.getElementById('usersTab');
+            const groupsTab = document.getElementById('groupsTab');
+            const addBtn = document.getElementById('addBtn');
+            
+            if (canManageUsers()) usersTab.classList.remove('hidden');
+            else usersTab.classList.add('hidden');
+            
+            if (canManageGroups()) groupsTab.classList.remove('hidden');
+            else groupsTab.classList.add('hidden');
+            
+            if (canPublishTask() || canManageUsers() || canManageGroups()) {
+                addBtn.style.display = 'flex';
+            } else {
+                addBtn.style.display = 'none';
+            }
+        }
+
+        function renderHomeStats() {
+            if (!currentUser) return;
+            const stats = getUserStats(currentUser.id);
+            document.getElementById('statPending').textContent = stats.pending;
+            document.getElementById('statOverdue').textContent = stats.overdue;
+            document.getElementById('statCompleted').textContent = stats.completed;
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const filteredTasks = getFilteredTasks(currentTaskStatus);
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = `<div class="empty-state"><p class="empty-text">暂无${getStatusText(currentTaskStatus)}任务</p></div>`;
+                return;
+            }
+
+            taskList.innerHTML = filteredTasks.map(task => {
+                const assignee = getUserById(task.assignedTo);
+                const creator = getUserById(task.createdBy);
+                const isOverdue = isTaskOverdue(task);
+                const deadlineClass = getDeadlineStatusClass(task);
+                
+                return `
+                    <div class="task-card ${isOverdue ? 'overdue' : ''}" data-id="${task.id}" onclick="openTaskDetailModal('${task.id}')">
+                        <div class="task-header">
+                            <h3 class="task-title">${escapeHtml(task.title)}</h3>
+                            <span class="task-badge ${isOverdue ? 'overdue' : task.status}">${isOverdue ? '已超时' : getStatusText(task.status)}</span>
+                        </div>
+                        ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ''}
+                        <div class="task-footer">
+                            <span class="task-meta"><span>📅</span> ${formatDate(task.createdAt)}</span>
+                            ${task.deadline ? `<span class="task-deadline ${deadlineClass}">⏰ ${formatDateTime(task.deadline)}</span>` : ''}
+                            ${assignee ? `<span class="task-assignee">👤 ${escapeHtml(assignee.name)}</span>` : ''}
+                            ${task.assignedGroup ? `<span class="group-badge ${task.assignedGroup}">${getGroupText(task.assignedGroup)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderUsers() {
+            const userList = document.getElementById('userList');
+            if (!userList) return;
+            userList.innerHTML = users.map(user => {
+                const canEdit = canManageUsers();
+                const canDelete = canDeleteUser(user.id);
+                return `
+                    <div class="user-card">
+                        <div class="user-card-left">
+                            <div class="user-card-avatar">${user.name.charAt(0)}</div>
+                            <div class="user-card-info">
+                                <div class="name">${escapeHtml(user.name)}</div>
+                                <div class="username">账号：${escapeHtml(user.username)}</div>
+                                <div class="user-card-tags">
+                                    <span class="role-badge ${user.role}">${getRoleText(user.role)}</span>
+                                    ${user.group ? `<span class="group-badge ${user.group}">${getGroupText(user.group)}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ${canEdit ? `
+                            <div class="user-card-actions">
+                                <button onclick="openEditUserModal('${user.id}')" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">编辑</button>
+                                ${canDelete ? `<button onclick="confirmDeleteUser('${user.id}')" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">删除</button>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderGroups() {
+            const groupList = document.getElementById('groupList');
+            if (!groupList) return;
+            groupList.innerHTML = groups.map(group => {
+                const memberCount = users.filter(u => u.group === group.key).length;
+                return `
+                    <div class="group-card">
+                        <div class="group-card-header">
+                            <div class="group-card-title">${escapeHtml(group.name)}</div>
+                            <div class="group-card-count">${memberCount} 人</div>
+                        </div>
+                        <div class="user-card-actions">
+                            <button onclick="openEditGroupModal('${group.id}')" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);">编辑</button>
+                            <button onclick="confirmDeleteGroup('${group.id}')" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">删除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStats() {
+            const personalStats = getUserStats(currentUser.id);
+            document.getElementById('personalStatsCard').innerHTML = `
+                <div class="stats-row">
+                    <div class="stat-item"><div class="stat-number pending">${personalStats.pending}</div><div class="stat-label">待完成</div></div>
+                    <div class="stat-item"><div class="stat-number completed">${personalStats.completed}</div><div class="stat-label">已完成</div></div>
+                </div>
+                ${personalStats.total > 0 ? `
+                    <div class="progress-bar-container">
+                        <div class="progress-label-row"><span class="progress-label">完成进度</span><span class="progress-value">${Math.round(personalStats.completed / personalStats.total * 100)}%</span></div>
+                        <div class="progress-bar"><div class="progress-fill completed" style="width: ${personalStats.completed / personalStats.total * 100}%"></div></div>
+                    </div>
+                ` : ''}
+            `;
+
+            const teamStatsSection = document.getElementById('teamStats');
+            const rankSection = document.getElementById('rankSection');
+            
+            if (isAdminOrAbove()) {
+                teamStatsSection.classList.remove('hidden');
+                rankSection.classList.remove('hidden');
+                
+                const teamStats = getTeamStats();
+                document.getElementById('teamStatsCard').innerHTML = `
+                    <div class="stats-row">
+                        <div class="stat-item"><div class="stat-number pending">${teamStats.pending}</div><div class="stat-label">待完成</div></div>
+                        <div class="stat-item"><div class="stat-number completed">${teamStats.completed}</div><div class="stat-label">已完成</div></div>
+                        <div class="stat-item"><div class="stat-number" style="color: var(--danger);">${teamStats.overdue}</div><div class="stat-label">已超时</div></div>
+                    </div>
+                    ${teamStats.total > 0 ? `
+                        <div class="progress-bar-container">
+                            <div class="progress-label-row"><span class="progress-label">总体完成率</span><span class="progress-value">${Math.round(teamStats.completed / teamStats.total * 100)}%</span></div>
+                            <div class="progress-bar"><div class="progress-fill completed" style="width: ${teamStats.completed / teamStats.total * 100}%"></div></div>
+                        </div>
+                    ` : ''}
+                `;
+
+                document.getElementById('rankCard').innerHTML = getRankList().map((user, index) => {
+                    let rankClass = 'default';
+                    if (index === 0) rankClass = 'gold';
+                    else if (index === 1) rankClass = 'silver';
+                    else if (index === 2) rankClass = 'bronze';
+                    return `
+                        <div class="rank-item">
+                            <div class="rank-number ${rankClass}">${index + 1}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">${escapeHtml(user.name)}</div>
+                                <div class="rank-group">${user.group ? getGroupText(user.group) : '无群组'}</div>
+                            </div>
+                            <div class="rank-stats">
+                                <div class="completed">${user.completed} / ${user.total}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                teamStatsSection.classList.add('hidden');
+                rankSection.classList.add('hidden');
+            }
+        }
+
+        function populateUserGroupSelect() {
+            const userGroupSelect = document.getElementById('userGroup');
+            userGroupSelect.innerHTML = '<option value="">不设置</option>' + 
+                groups.map(g => `<option value="${g.key}">${g.name}</option>`).join('');
+        }
+
+        function populateAssignSelects() {
+            const assignGroupSelect = document.getElementById('taskAssignGroup');
+            assignGroupSelect.innerHTML = groups.map(g => `<option value="${g.key}">${g.name}</option>`).join('');
+            
+            const assignPersonSelect = document.getElementById('taskAssignedTo');
+            assignPersonSelect.innerHTML = users.filter(u => u.role === UserRole.USER).map(u => 
+                `<option value="${u.id}">${u.name}</option>`
+            ).join('');
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+        }
+
+        function openAddUserModal() {
+            document.getElementById('userModalTitle').textContent = '添加用户';
+            document.getElementById('userForm').reset();
+            document.getElementById('editUserId').value = '';
+            document.getElementById('passwordGroup').classList.remove('hidden');
+            populateUserGroupSelect();
+            openModal('userModal');
+        }
+
+        function openEditUserModal(userId) {
+            const user = getUserById(userId);
+            if (!user) return;
+
+            document.getElementById('userModalTitle').textContent = '编辑用户';
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('userName').value = user.name;
+            document.getElementById('userUsername').value = user.username;
+            document.getElementById('userPassword').value = '';
+            document.getElementById('passwordGroup').classList.add('hidden');
+            document.getElementById('userRole').value = user.role;
+            populateUserGroupSelect();
+            document.getElementById('userGroup').value = user.group || '';
+            openModal('userModal');
+        }
+
+        function confirmDeleteUser(userId) {
+            confirmCallback = () => {
+                deleteUser(userId);
+                renderUsers();
+            };
+            document.getElementById('confirmMessage').textContent = '确定要删除这个用户吗？';
+            openModal('confirmModal');
+        }
+
+        function openAddGroupModal() {
+            document.getElementById('groupModalTitle').textContent = '添加群组';
+            document.getElementById('groupForm').reset();
+            document.getElementById('editGroupId').value = '';
+            openModal('groupModal');
+        }
+
+        function openEditGroupModal(groupId) {
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            document.getElementById('groupModalTitle').textContent = '编辑群组';
+            document.getElementById('editGroupId').value = group.id;
+            document.getElementById('groupName').value = group.name;
+            document.getElementById('groupKey').value = group.key;
+            openModal('groupModal');
+        }
+
+        function confirmDeleteGroup(groupId) {
+            confirmCallback = () => {
+                deleteGroup(groupId);
+                renderGroups();
+                renderUsers();
+            };
+            document.getElementById('confirmMessage').textContent = '确定要删除这个群组吗？相关用户的群组设置会被清除。';
+            openModal('confirmModal');
+        }
+
+        function openAddTaskModal() {
+            document.getElementById('addTaskForm').reset();
+            document.getElementById('assignGroup').classList.add('hidden');
+            document.getElementById('assignGroupSelect').classList.add('hidden');
+            document.getElementById('assignPersonGroup').classList.add('hidden');
+            populateAssignSelects();
+            openModal('addTaskModal');
+        }
+
+        function openTaskDetailModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const assignee = getUserById(task.assignedTo);
+            const creator = getUserById(task.createdBy);
+            const isOverdue = isTaskOverdue(task);
+
+            document.getElementById('taskDetail').innerHTML = `
+                <div class="task-detail-item">
+                    <div class="task-detail-label">任务标题</div>
+                    <div class="task-detail-value">${escapeHtml(task.title)}</div>
+                </div>
+                ${task.description ? `
+                    <div class="task-detail-item">
+                        <div class="task-detail-label">任务描述</div>
+                        <div class="task-detail-value">${escapeHtml(task.description)}</div>
+                    </div>
+                ` : ''}
+                <div class="task-detail-item">
+                    <div class="task-detail-label">状态</div>
+                    <div class="task-detail-value">
+                        <span class="task-badge ${isOverdue ? 'overdue' : task.status}">${isOverdue ? '已超时' : getStatusText(task.status)}</span>
+                    </div>
+                </div>
+                <div class="task-detail-item">
+                    <div class="task-detail-label">负责人</div>
+                    <div class="task-detail-value">${assignee ? assignee.name : '未设置'}</div>
+                </div>
+                ${task.deadline ? `
+                    <div class="task-detail-item">
+                        <div class="task-detail-label">截止时间</div>
+                        <div class="task-detail-value">${formatDateTime(task.deadline)}</div>
+                    </div>
+                ` : ''}
+                <div class="task-detail-item">
+                    <div class="task-detail-label">创建时间</div>
+                    <div class="task-detail-value">${formatDateTime(task.createdAt)}</div>
+                </div>
+                ${task.completedAt ? `
+                    <div class="task-detail-item">
+                        <div class="task-detail-label">完成时间</div>
+                        <div class="task-detail-value">${formatDateTime(task.completedAt)}</div>
+                    </div>
+                ` : ''}
+            `;
+
+            const actionsContainer = document.getElementById('taskDetailActions');
+            if (task.status === TaskStatus.PENDING && canEditTask(task)) {
+                actionsContainer.innerHTML = `
+                    <button type="button" class="btn btn-secondary" id="closeTaskDetailBtn">关闭</button>
+                    <button type="button" class="btn btn-success" id="completeTaskBtn">标记完成</button>
+                `;
+                document.getElementById('completeTaskBtn').onclick = () => {
+                    updateTaskStatus(taskId, TaskStatus.COMPLETED);
+                    closeModal('taskDetailModal');
+                    renderTasks();
+                    renderHomeStats();
+                    renderStats();
+                };
+            } else {
+                actionsContainer.innerHTML = `
+                    <button type="button" class="btn btn-secondary" id="closeTaskDetailBtn">关闭</button>
+                `;
+            }
+
+            document.getElementById('closeTaskDetailBtn').onclick = () => closeModal('taskDetailModal');
+            openModal('taskDetailModal');
+        }
+
+        function initEventListeners() {
+            // 登录表单
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (login(username, password)) {
+                    document.getElementById('loginError').classList.add('hidden');
+                    showMainApp();
+                } else {
+                    document.getElementById('loginError').textContent = '账号或密码错误';
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            });
+
+            // 导航标签
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    const page = tab.dataset.page;
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(page + 'Page').classList.add('active');
+                    
+                    if (page === 'users') renderUsers();
+                    if (page === 'groups') renderGroups();
+                    if (page === 'stats') renderStats();
+                });
+            });
+
+            // 任务标签
+            document.querySelectorAll('.task-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.task-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTaskStatus = tab.dataset.status;
+                    renderTasks();
+                });
+            });
+
+            // FAB按钮
+            document.getElementById('addBtn').addEventListener('click', () => {
+                if (canPublishTask()) {
+                    openAddTaskModal();
+                } else if (canManageUsers()) {
+                    openAddUserModal();
+                } else if (canManageGroups()) {
+                    openAddGroupModal();
+                }
+            });
+
+            // 用户下拉菜单
+            document.getElementById('userInfo').addEventListener('click', () => {
+                document.getElementById('userDropdown').classList.toggle('active');
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                document.getElementById('userDropdown').classList.remove('active');
+                logout();
+            });
+
+            // 关闭下拉菜单
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.user-info')) {
+                    document.getElementById('userDropdown').classList.remove('active');
+                }
+            });
+
+            // 任务表单
+            document.getElementById('taskAssignType').addEventListener('change', (e) => {
+                const value = e.target.value;
+                document.getElementById('assignGroupSelect').classList.toggle('hidden', value !== 'group');
+                document.getElementById('assignPersonGroup').classList.toggle('hidden', value !== 'person');
+            });
+
+            document.getElementById('addTaskForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const title = document.getElementById('taskTitle').value;
+                const description = document.getElementById('taskDescription').value;
+                const deadlineInput = document.getElementById('taskDeadline').value;
+                const assignType = canPublishTask() ? document.getElementById('taskAssignType').value : 'person';
+                const assignValue = canPublishTask() ? 
+                    (assignType === 'group' ? document.getElementById('taskAssignGroup').value : 
+                     assignType === 'person' ? document.getElementById('taskAssignedTo').value : null)
+                    : currentUser.id;
+                
+                const deadline = deadlineInput ? new Date(deadlineInput).toISOString() : null;
+                
+                publishTask(title, description, deadline, assignType, assignValue);
+                closeModal('addTaskModal');
+                renderTasks();
+                renderHomeStats();
+                renderStats();
+            });
+
+            // 用户表单
+            document.getElementById('userForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editUserId').value;
+                const name = document.getElementById('userName').value;
+                const username = document.getElementById('userUsername').value;
+                const password = document.getElementById('userPassword').value;
+                const role = document.getElementById('userRole').value;
+                const group = document.getElementById('userGroup').value || undefined;
+
+                if (!isValidUsername(username)) {
+                    alert('请输入15位以内的数字作为账号');
+                    return;
+                }
+
+                if (id) {
+                    updateUser(id, name, username, password || undefined, role, group);
+                } else {
+                    if (!password) {
+                        alert('请输入密码');
+                        return;
+                    }
+                    addUser(name, username, password, role, group);
+                }
+
+                closeModal('userModal');
+                renderUsers();
+            });
+
+            // 群组表单
+            document.getElementById('groupForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editGroupId').value;
+                const name = document.getElementById('groupName').value;
+                const key = document.getElementById('groupKey').value;
+
+                if (id) {
+                    updateGroup(id, name, key);
+                } else {
+                    addGroup(name, key);
+                }
+
+                closeModal('groupModal');
+                renderGroups();
+            });
+
+            // 确认对话框
+            document.getElementById('confirmBtn').addEventListener('click', () => {
+                if (confirmCallback) {
+                    confirmCallback();
+                    confirmCallback = null;
+                }
+                closeModal('confirmModal');
+            });
+
+            // 关闭按钮
+            document.getElementById('closeAddTaskModal').addEventListener('click', () => closeModal('addTaskModal'));
+            document.getElementById('cancelAddTask').addEventListener('click', () => closeModal('addTaskModal'));
+            document.getElementById('closeUserModal').addEventListener('click', () => closeModal('userModal'));
+            document.getElementById('cancelUser').addEventListener('click', () => closeModal('userModal'));
+            document.getElementById('closeGroupModal').addEventListener('click', () => closeModal('groupModal'));
+            document.getElementById('cancelGroup').addEventListener('click', () => closeModal('groupModal'));
+            document.getElementById('closeConfirmModal').addEventListener('click', () => closeModal('confirmModal'));
+            document.getElementById('cancelConfirm').addEventListener('click', () => closeModal('confirmModal'));
+            document.getElementById('closeTaskDetailModal').addEventListener('click', () => closeModal('taskDetailModal'));
+
+            // 模态框点击外部关闭
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
+                    }
+                });
+            });
+        }
+
+        // 初始化
+        function init() {
+            loadData();
+            
+            if (currentUser) {
+                showMainApp();
+            } else {
+                showLoginPage();
+            }
+
+            initEventListeners();
+        }
+
+        init();
+    </script>
+</body>
+</html>
